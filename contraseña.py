@@ -60,16 +60,16 @@ def evaluar_criterios(pwd):
 
 # --- INTERFAZ GRÁFICA (STREAMLIT) ---
 
-st.set_page_config(page_title="Gestor de Contraseñas Seguras", page_icon="🔐")
+st.set_page_config(page_title="Gestor de Contraseñas Seguras")
 
-st.title("🔐 Gestor de Contraseñas Seguras")
+st.title(" Gestor de Contraseñas Seguras")
 st.write("Genera contraseñas fuertes o evalúa las tuyas siguiendo los mejores estándares de ciberseguridad.")
 
 st.divider()
 
 # SECCIÓN 1: Generador
 st.header("1. Generador de Contraseñas")
-palabra_input = st.text_input("Ingresa tu palabra base:", placeholder="Ej. la niña")
+palabra_input = st.text_input("Ingresa tu palabra base:")
 
 if st.button("Generar Opciones", type="primary"):
     palabra_limpia = palabra_input.replace(" ", "")
