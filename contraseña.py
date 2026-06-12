@@ -1,11 +1,11 @@
 import streamlit as st
 import string
 import secrets
-from st_keyup import st_keyup
 
 # --- FUNCIONES DE LÓGICA ---
 
 def generar_contrasenas(palabra_base):
+    # Elimina los espacios de la palabra base
     palabra_base = palabra_base.replace(" ", "")
     simbolos = "!@#$%&*+?"
     numeros = string.digits
@@ -40,7 +40,7 @@ def generar_contrasenas(palabra_base):
 def evaluar_criterios(pwd):
     simbolos_validos = set(string.punctuation)
     
-    # Si el campo está vacío, devolvemos todo en falso para no evaluar nada aún
+    # Si el campo está vacío, devolvemos todo en falso
     if not pwd:
         return {
             "Longitud de 12 caracteres o más": False,
@@ -96,13 +96,12 @@ st.divider()
 
 # SECCIÓN 2: Evaluador
 st.header("2. Evaluador de Contraseñas")
-st.write("Escribe tu contraseña. Los criterios se actualizarán al instante.")
+st.write("Escribe tu contraseña y presiona **Enter** (o haz clic fuera del cuadro) para actualizar los criterios.")
 
-# Usamos st_keyup para que se actualice tecla por tecla. 
-# Nota: Si omites type="password", la contraseña será visible mientras se escribe.
-pwd_prueba = st_keyup("Ingresa la contraseña a probar:", type="password", key="evaluador")
+# Al quitar type="password", quitamos automáticamente el ícono del ojo.
+pwd_prueba = st.text_input("Ingresa la contraseña a probar:")
 
-# Evaluar en tiempo real
+# Evaluar según el texto actual
 criterios = evaluar_criterios(pwd_prueba)
 
 st.markdown("### Progreso de seguridad:")
@@ -120,4 +119,4 @@ if pwd_prueba:
         st.markdown("**Copia tu nueva contraseña aquí (ícono a la derecha):**")
         st.code(pwd_prueba, language="text")
     else:
-        st.info("💡 Sigue escribiendo hasta que todos los criterios estén en verde.")
+        st.info("💡 Faltan algunos criterios. Modifica tu contraseña y presiona Enter para revisar de nuevo.")
