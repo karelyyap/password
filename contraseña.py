@@ -6,34 +6,40 @@ from st_keyup import st_keyup
 # --- FUNCIONES DE LÓGICA ---
 
 def generar_contrasenas(palabra_base):
-    # Aseguramos que se eliminen los espacios antes de procesar la palabra
-    palabra_base = palabra_base.replace(" ", "")[:5] 
+    # 1. Separamos por espacios para identificar si hay múltiples palabras
+    palabras = palabra_base.split() 
+    
+    if len(palabras) > 1:
+        # Si hay varias, toma las primeras 2 letras de cada una y las une
+        palabra_base = "".join(p[:2] for p in palabras)[:5]
+    else:
+        # Si es una sola palabra, nos aseguramos de quitar los espacios y tomar 5 letras
+        palabra_base = palabra_base.replace(" ", "")[:5] 
     
     simbolos = "!@#$%&*+?"
     numeros = string.digits
     letras = string.ascii_letters
     opciones = []
 
-    # Generamos 3 contraseñas distintas usando estrictamente la lógica encapsulada
+    # Generamos 3 contraseñas distintas usando la lógica encapsulada
     for _ in range(3):
         relleno_izq = "".join(secrets.choice(letras + numeros + simbolos) for _ in range(3))
         pwd = f"{relleno_izq}{palabra_base}{secrets.choice(simbolos)}{secrets.choice(numeros)}"
         
-        # Rellenamos de forma aleatoria hasta asegurar que se completen los 12 caracteres
+        # En la generación sí obligamos a que sean 12 caracteres exactos
         while len(pwd) < 12:
             pwd += secrets.choice(letras + numeros + simbolos)
             
-        opciones.append(pwd[:12]) # Cortamos a 12 exactos por seguridad
+        opciones.append(pwd[:12])
 
     return opciones
 
 def evaluar_criterios(pwd):
     simbolos_validos = set(string.punctuation)
     
-    # Si el campo está vacío, devolvemos todo en falso
     if not pwd:
         return {
-            "Longitud exacta de 12 caracteres": False,
+            "Longitud de 12 caracteres o más": False, # <-- CORREGIDO
             "Al menos una letra mayúscula": False,
             "Al menos una letra minúscula": False,
             "Al menos un número": False,
@@ -41,7 +47,7 @@ def evaluar_criterios(pwd):
         }
         
     return {
-        "Longitud exacta de 12 caracteres": len(pwd) == 12,
+        "Longitud de 12 caracteres o más": len(pwd) >= 12, # <-- CORREGIDO
         "Al menos una letra mayúscula": any(c.isupper() for c in pwd),
         "Al menos una letra minúscula": any(c.islower() for c in pwd),
         "Al menos un número": any(c.isdigit() for c in pwd),
@@ -63,7 +69,7 @@ st.header("1. Generador de Contraseñas")
 palabra_input = st.text_input("Ingresa tu palabra o frase base (Máximo 50 caracteres):", max_chars=50)
 
 if st.button("Generar Opciones", type="primary"):
-    # Limpieza inicial para la validación del botón
+    # Validamos usando la entrada sin espacios
     palabra_limpia = palabra_input.replace(" ", "")
     
     if palabra_limpia:
@@ -90,7 +96,6 @@ st.divider()
 st.header("2. Evaluador de Contraseñas (En vivo)")
 st.write("Escribe tu contraseña y la evaluación se actualizará mientras tecleas.")
 
-# st_keyup con identificador único (key) para evitar bloqueos
 pwd_prueba = st_keyup("Ingresa la contraseña a probar:", max_chars=50, key="eval") or ""
 
 criterios = evaluar_criterios(pwd_prueba)
@@ -103,7 +108,8 @@ for criterio, cumplido in criterios.items():
 
 if pwd_prueba:
     if all(criterios.values()):
-        st.success("¡Excelente! Tu contraseña es 100% segura y cumple con los 12 caracteres.")
+        # <-- CORREGIDO EL MENSAJE DE ÉXITO
+        st.success("¡Excelente! Tu contraseña es 100% segura y cumple con los requisitos de longitud.")
         st.balloons()
         
         st.markdown("**Copia tu nueva contraseña aquí (ícono a la derecha):**")
