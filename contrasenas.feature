@@ -1,55 +1,111 @@
 # language: es
+@gestor_contrasenas @seguridad
+Característica: Sistema Integral de Generación y Evaluación de Contraseñas Seguras
+  Para proteger la integridad de las cuentas y prevenir ataques de fuerza bruta
+  Como usuario final sin conocimientos técnicos avanzados
+  Quiero una herramienta que genere contraseñas de alta entropía y evalúe mis contraseñas actuales
 
-Característica: Gestor de Contraseñas Seguras
-  Como usuario del sistema
-  Quiero generar contraseñas fuertes y evaluar el progreso de las mías
-  Para proteger mis cuentas siguiendo los mejores estándares de ciberseguridad
+  Antecedentes:
+    Dado que el sistema del "Gestor de Contraseñas Seguras" está iniciado
+    Y la interfaz gráfica construida con Streamlit ha cargado correctamente
 
-  # --- Pruebas para la Sección 1: Generador de Contraseñas ---
+  # ========================================================================
+  # MÓDULO 1: GENERADOR DE CONTRASEÑAS
+  # ========================================================================
 
-  Escenario: Generar opciones de contraseña válidas a partir de una palabra simple
-    Dado que el usuario ingresa la palabra base "mariposa"
-    Cuando hace clic en el botón de "Generar Opciones"
-    Entonces el sistema debe devolver exactamente 3 opciones de seguridad
-    Y la Opción 1 debe seguir el formato de "Frase Secreta"
-    Y la Opción 2 debe aplicar sustitución de caracteres (Leetspeak)
-    Y la Opción 3 debe aplicar encapsulamiento aleatorio
-    Y todas las opciones generadas deben tener una longitud mínima de 12 caracteres
+  @generador @validaciones_entrada
+  Esquema del escenario: Bloqueo de generación por entradas inválidas o cortas
+    Dado que el usuario se encuentra en la sección del Generador
+    Cuando ingresa la cadena "<entrada_usuario>" en el campo de palabra base
+    Y hace clic en el botón "Generar Opciones"
+    Entonces el sistema debe detectar que la longitud útil es menor a 3 caracteres
+    Y debe mostrar una advertencia pidiendo suficientes letras
+    Y no debe generar ninguna contraseña
 
-  Escenario: Limpieza de espacios en palabras compuestas
-    Dado que el usuario ingresa la palabra base "la niña"
-    Cuando el sistema valida la entrada antes de generar
-    Entonces el sistema debe ignorar los espacios en blanco
-    Y debe tratar la palabra como "laniña" para validar que tiene más de 3 letras
-    Y debe generar las contraseñas exitosamente
+    Ejemplos: Entradas no válidas
+      | entrada_usuario | motivo_rechazo                          |
+      | a               | Un solo carácter                        |
+      | yo              | Dos caracteres                          |
+      |                 | Campo vacío                             |
+      | "  "            | Solo espacios (se eliminan al procesar) |
+      | " a "           | Solo un carácter útil tras limpieza     |
 
-  Escenario: Intentar generar contraseñas con una palabra muy corta (incluyendo espacios)
-    Dado que el usuario ingresa la palabra base "y o"
-    Cuando el sistema limpia los espacios en blanco
-    Y valida que la longitud real es menor a 3 letras
-    Entonces el sistema debe mostrar una advertencia pidiendo al menos 3 letras
-    Y no se deben generar ni mostrar las opciones de contraseña
+  @generador @logica_procesamiento
+  Escenario: Procesamiento de una sola palabra eliminando espacios
+    Dado que el usuario ingresa la palabra "   m a r i p o s a   "
+    Cuando el sistema procesa la entrada para la generación
+    Entonces debe eliminar todos los espacios en blanco
+    Y debe utilizar un máximo de 5 caracteres ("marip") como núcleo de la contraseña
 
-  # --- Pruebas para la Sección 2: Evaluador en Tiempo Real ---
+  @generador @logica_procesamiento
+  Escenario: Procesamiento de múltiples palabras extrayendo fragmentos
+    Dado que el usuario ingresa la frase "Mi perro azul"
+    Cuando el sistema procesa la entrada para la generación
+    Entonces debe separar la frase por palabras
+    Y debe tomar las primeras 2 letras de cada palabra ("Mi", "pe", "az")
+    Y debe unir los fragmentos limitando el núcleo a 5 caracteres ("Mipea")
 
-  Escenario: Mostrar estado inicial del evaluador con campo vacío
-    Dado que el usuario está en la sección del evaluador
-    Y el campo de texto está vacío
-    Entonces la lista de progreso debe mostrar 5 criterios
-    Y todos los criterios deben aparecer como incumplidos (❌ en rojo)
-    Y el bloque para copiar la contraseña debe mantenerse oculto
+  @generador @salida_exitosa @maxima_seguridad
+  Escenario: Generación exitosa de tres variaciones encapsuladas
+    Dado que el usuario ingresó la palabra base válida "seguridad"
+    Cuando el sistema finaliza el proceso de generación
+    Entonces el sistema debe renderizar exactamente 3 cuadros de código
+    Y cada una de las 3 opciones debe tener una longitud exacta de 12 caracteres
+    Y cada opción debe comenzar con una cadena aleatoria de letras, números y símbolos
+    Y cada opción debe terminar con una cadena aleatoria garantizando la encapsulación
 
-  Escenario: Evaluar una contraseña que cumple longitud pero carece de variedad
-    Dado que el usuario ingresa la contraseña "contraseñalarga"
-    Cuando el sistema evalúa la seguridad de los criterios
-    Entonces el criterio "Longitud de 12 caracteres o más" debe marcarse como cumplido (✅ en verde)
-    Pero el criterio "Al menos una letra mayúscula" debe mostrarse incumplido (❌)
-    Y el criterio "Al menos un número" debe mostrarse incumplido (❌)
-    Y el bloque de copiar contraseña debe seguir oculto
+  # ========================================================================
+  # MÓDULO 2: EVALUADOR DE CONTRASEÑAS (REACTIVO)
+  # ========================================================================
 
-  Escenario: Evaluar una contraseña completamente segura y habilitar el copiado
-    Dado que el usuario ingresa la contraseña "L@_n1ñA_2026!"
-    Cuando el sistema evalúa la seguridad de todos los criterios
-    Entonces todos los elementos de la lista deben marcarse como cumplidos (✅ en verde)
-    Y el sistema debe mostrar un mensaje de éxito ("Tu contraseña es 100% segura")
-    Y se debe habilitar y mostrar el bloque de texto con el ícono para copiar al portapapeles
+  @evaluador @reactividad
+  Escenario: Evaluación en tiempo real (st_keyup)
+    Dado que el usuario está en la sección del Evaluador
+    Cuando teclea un nuevo carácter en el campo de prueba
+    Entonces el sistema no debe requerir que se presione el botón "Enter"
+    Y debe actualizar los 5 criterios de seguridad instantáneamente en la pantalla
+
+  @evaluador @limite_caracteres
+  Escenario: Respeto del límite máximo de caracteres en el evaluador
+    Dado que el usuario intenta pegar una contraseña extremadamente larga
+    Cuando la cadena supera los 50 caracteres
+    Entonces el campo de texto debe truncar la entrada al límite configurado de 50
+
+  @evaluador @criterios_individuales
+  Esquema del escenario: Validación estricta de la variedad de caracteres
+    Dado que el usuario ingresa la contraseña "<contrasena_prueba>"
+    Cuando el evaluador procesa la cadena
+    Entonces el indicador de mayúscula debe ser "<req_mayus>"
+    Y el indicador de minúscula debe ser "<req_minus>"
+    Y el indicador de número debe ser "<req_num>"
+    Y el indicador de símbolo especial debe ser "<req_simbolo>"
+
+    Ejemplos: Pruebas de variedad atómica
+      | contrasena_prueba | req_mayus | req_minus | req_num | req_simbolo |
+      | sololetras        | Falso     | Verdadero | Falso   | Falso       |
+      | MAYUSCULAS        | Verdadero | Falso     | Falso   | Falso       |
+      | 1234567890        | Falso     | Falso     | Verdadero| Falso      |
+      | !@#$%&*()_+       | Falso     | Falso     | Falso   | Verdadero   |
+      | Letras123         | Verdadero | Verdadero | Verdadero| Falso      |
+
+  @evaluador @casos_limite_longitud
+  Esquema del escenario: Pruebas de frontera para la longitud de la contraseña
+    Dado que la contraseña ingresada tiene exactamente "<longitud>" caracteres
+    Cuando se evalúa el criterio de longitud
+    Entonces el sistema debe marcar el criterio de longitud como "<resultado>"
+
+    Ejemplos: Valores de frontera (Boundary Value Analysis)
+      | longitud | resultado |
+      | 0        | Falso     |
+      | 11       | Falso     |
+      | 12       | Verdadero |
+      | 13       | Verdadero |
+      | 50       | Verdadero |
+
+  @evaluador @flujo_completo
+  Escenario: Aprobación total de una contraseña 100% segura
+    Dado que el usuario tecleó la contraseña "K@r3ly_2026!"
+    Cuando todos los 5 criterios de seguridad cambian a estado "Verdadero"
+    Entonces el sistema debe mostrar un mensaje de éxito ("¡Excelente!")
+    Y debe disparar la animación de globos (balloons) en la interfaz
+    Y debe mostrar un bloque de código para que el usuario pueda copiar su contraseña validada
