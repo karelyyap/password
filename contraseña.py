@@ -1,12 +1,15 @@
 import streamlit as st
 import string
 import secrets
+from st_keyup import st_keyup
 
 # --- FUNCIONES DE LÓGICA ---
 
 def generar_contrasenas(palabra_base):
-    # Elimina los espacios de la palabra base
-    palabra_base = palabra_base.replace(" ", "")
+    # Quitamos espacios y tomamos máximo 5 letras de la palabra base
+    # Esto garantiza que al sumar símbolos y palabras, la longitud sea controlable
+    palabra_base = palabra_base.replace(" ", "")[:5] 
+    
     simbolos = "!@#$%&*+?"
     numeros = string.digits
     letras = string.ascii_letters
@@ -14,26 +17,25 @@ def generar_contrasenas(palabra_base):
 
     # Opción 1: Frase Secreta
     palabras_random = ["Zorro", "Luna", "Nova", "Roca", "Cima", "Eco"]
-    op1 = f"{palabra_base.capitalize()}{secrets.choice(palabras_random)}{secrets.choice(numeros)}{secrets.choice(numeros)}{secrets.choice(simbolos)}"
+    op1 = f"{palabra_base.capitalize()}{secrets.choice(palabras_random)}{secrets.choice(numeros)}{secrets.choice(simbolos)}"
     while len(op1) < 12:
         op1 += secrets.choice(simbolos + numeros)
-    opciones.append(op1)
+    opciones.append(op1[:12])
 
     # Opción 2: Sustitución (Leetspeak)
     leet = {'a': '@', 'e': '3', 'i': '1', 'o': '0', 's': '$'}
     op2_base = "".join(leet.get(c.lower(), c) for c in palabra_base)
-    op2 = f"{op2_base.capitalize()}{secrets.choice(simbolos)}{secrets.choice(simbolos)}"
+    op2 = f"{op2_base.capitalize()}{secrets.choice(simbolos)}{secrets.choice(numeros)}"
     while len(op2) < 12:
         op2 += secrets.choice(letras + numeros)
-    opciones.append(op2)
+    opciones.append(op2[:12])
 
     # Opción 3: Base encapsulada
-    relleno_izq = "".join(secrets.choice(letras + numeros + simbolos) for _ in range(4))
-    relleno_der = "".join(secrets.choice(letras + numeros + simbolos) for _ in range(4))
-    op3 = f"{relleno_izq}{palabra_base}{relleno_der}"
+    relleno_izq = "".join(secrets.choice(letras + numeros + simbolos) for _ in range(3))
+    op3 = f"{relleno_izq}{palabra_base}{secrets.choice(simbolos)}{secrets.choice(numeros)}"
     while len(op3) < 12:
-        op3 += secrets.choice(simbolos)
-    opciones.append(op3)
+        op3 += secrets.choice(letras + numeros + simbolos)
+    opciones.append(op3[:12])
 
     return opciones
 
@@ -43,7 +45,7 @@ def evaluar_criterios(pwd):
     # Si el campo está vacío, devolvemos todo en falso
     if not pwd:
         return {
-            "Longitud de 12 caracteres o más": False,
+            "Longitud exacta de 12 caracteres": False,
             "Al menos una letra mayúscula": False,
             "Al menos una letra minúscula": False,
             "Al menos un número": False,
@@ -51,7 +53,7 @@ def evaluar_criterios(pwd):
         }
         
     return {
-        "Longitud de 12 caracteres o más": len(pwd) >= 12,
+        "Longitud exacta de 12 caracteres": len(pwd) == 12,
         "Al menos una letra mayúscula": any(c.isupper() for c in pwd),
         "Al menos una letra minúscula": any(c.islower() for c in pwd),
         "Al menos un número": any(c.isdigit() for c in pwd),
@@ -60,18 +62,21 @@ def evaluar_criterios(pwd):
 
 # --- INTERFAZ GRÁFICA (STREAMLIT) ---
 
-st.set_page_config(page_title="Gestor de Contraseñas Seguras")
+st.set_page_config(page_title="Gestor de Contraseñas - Karely Aragón", page_icon="🔐")
 
-st.title(" Gestor de Contraseñas Seguras")
+# Título con tu nombre para evidenciar autoría
+st.title("🔐 Gestor de Contraseñas Seguras")
+st.markdown("### Desarrollado por: Karely Aragón")
 st.write("Genera contraseñas fuertes o evalúa las tuyas siguiendo los mejores estándares de ciberseguridad.")
 
 st.divider()
 
 # SECCIÓN 1: Generador
 st.header("1. Generador de Contraseñas")
-palabra_input = st.text_input("Ingresa tu palabra base:")
+palabra_input = st.text_input("Ingresa tu palabra base (Máximo 50 caracteres):", max_chars=50)
 
 if st.button("Generar Opciones", type="primary"):
+    # Limpieza de espacios en la entrada del usuario
     palabra_limpia = palabra_input.replace(" ", "")
     
     if palabra_limpia:
@@ -79,7 +84,7 @@ if st.button("Generar Opciones", type="primary"):
             st.warning("Por favor, ingresa una palabra de al menos 3 letras (sin contar espacios).")
         else:
             opciones = generar_contrasenas(palabra_limpia)
-            st.success("¡Opciones generadas con éxito!")
+            st.success("¡Opciones generadas con éxito! Todas tienen exactamente 12 caracteres.")
             
             st.code(opciones[0], language="text")
             st.caption("Opción 1: Estilo 'Frase Secreta'. Fácil de memorizar.")
@@ -95,11 +100,11 @@ if st.button("Generar Opciones", type="primary"):
 st.divider()
 
 # SECCIÓN 2: Evaluador
-st.header("2. Evaluador de Contraseñas")
-st.write("Escribe tu contraseña y presiona **Enter** (o haz clic fuera del cuadro) para actualizar los criterios.")
+st.header("2. Evaluador de Contraseñas (En vivo)")
+st.write("Escribe tu contraseña y la evaluación se actualizará mientras tecleas.")
 
-# Al quitar type="password", quitamos automáticamente el ícono del ojo.
-pwd_prueba = st.text_input("Ingresa la contraseña a probar:")
+# st_keyup es la clave para que sea en vivo letra por letra
+pwd_prueba = st_keyup("Ingresa la contraseña a probar:", max_chars=50)
 
 # Evaluar según el texto actual
 criterios = evaluar_criterios(pwd_prueba)
@@ -113,10 +118,10 @@ for criterio, cumplido in criterios.items():
 # Lógica condicional: Mostrar el bloque de copiar SÓLO cuando todo es correcto
 if pwd_prueba:
     if all(criterios.values()):
-        st.success("¡Excelente! Tu contraseña es 100% segura.")
+        st.success("¡Excelente! Tu contraseña es 100% segura y cumple con los 12 caracteres.")
         st.balloons()
         
         st.markdown("**Copia tu nueva contraseña aquí (ícono a la derecha):**")
         st.code(pwd_prueba, language="text")
     else:
-        st.info("💡 Faltan algunos criterios. Modifica tu contraseña y presiona Enter para revisar de nuevo.")
+        st.info("💡 Sigue escribiendo hasta que todos los requisitos estén en verde.")
