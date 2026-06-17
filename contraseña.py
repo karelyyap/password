@@ -6,9 +6,15 @@ from st_keyup import st_keyup
 # --- FUNCIONES DE LÓGICA ---
 
 def generar_contrasenas(palabra_base):
-    # Quitamos espacios y tomamos máximo 5 letras de la palabra base
-    # Esto garantiza que al sumar símbolos y palabras, la longitud sea controlable
-    palabra_base = palabra_base.replace(" ", "")[:5] 
+    # NUEVA LÓGICA: Tomar un poquito de cada palabra
+    palabras = palabra_base.split() # Separa la frase por espacios
+    
+    if len(palabras) > 1:
+        # Si hay varias palabras, toma las primeras 2 letras de cada una y las une
+        palabra_base = "".join(p[:2] for p in palabras)[:5]
+    else:
+        # Si es solo una palabra, le quita espacios y toma las primeras 5 letras
+        palabra_base = palabra_base.replace(" ", "")[:5] 
     
     simbolos = "!@#$%&*+?"
     numeros = string.digits
@@ -64,7 +70,6 @@ def evaluar_criterios(pwd):
 
 st.set_page_config(page_title="Gestor de Contraseñas - Karely Aragón", page_icon="🔐")
 
-# Título con tu nombre para evidenciar autoría
 st.title("🔐 Gestor de Contraseñas Seguras")
 st.markdown("### Desarrollado por: Karely Aragón")
 st.write("Genera contraseñas fuertes o evalúa las tuyas siguiendo los mejores estándares de ciberseguridad.")
@@ -73,17 +78,17 @@ st.divider()
 
 # SECCIÓN 1: Generador
 st.header("1. Generador de Contraseñas")
-palabra_input = st.text_input("Ingresa tu palabra base (Máximo 50 caracteres):", max_chars=50)
+palabra_input = st.text_input("Ingresa tu palabra o frase base (Máximo 50 caracteres):", max_chars=50)
 
 if st.button("Generar Opciones", type="primary"):
-    # Limpieza de espacios en la entrada del usuario
+    # Limpiamos los espacios solo para contar que haya al menos 3 letras útiles
     palabra_limpia = palabra_input.replace(" ", "")
     
     if palabra_limpia:
         if len(palabra_limpia) < 3:
-            st.warning("Por favor, ingresa una palabra de al menos 3 letras (sin contar espacios).")
+            st.warning("Por favor, ingresa suficientes letras para generar algo seguro.")
         else:
-            opciones = generar_contrasenas(palabra_limpia)
+            opciones = generar_contrasenas(palabra_input)
             st.success("¡Opciones generadas con éxito! Todas tienen exactamente 12 caracteres.")
             
             st.code(opciones[0], language="text")
@@ -95,7 +100,7 @@ if st.button("Generar Opciones", type="primary"):
             st.code(opciones[2], language="text")
             st.caption("Opción 3: Aleatoria. Máxima seguridad para gestores de contraseñas.")
     else:
-        st.error("Debes ingresar una palabra base primero.")
+        st.error("Debes ingresar una palabra o frase base primero.")
 
 st.divider()
 
@@ -103,10 +108,9 @@ st.divider()
 st.header("2. Evaluador de Contraseñas (En vivo)")
 st.write("Escribe tu contraseña y la evaluación se actualizará mientras tecleas.")
 
-# st_keyup es la clave para que sea en vivo letra por letra
-pwd_prueba = st_keyup("Ingresa la contraseña a probar:", max_chars=50)
+# SOLUCIÓN: Agregamos key="eval" y garantizamos que si devuelve None, se convierta en ""
+pwd_prueba = st_keyup("Ingresa la contraseña a probar:", max_chars=50, key="eval") or ""
 
-# Evaluar según el texto actual
 criterios = evaluar_criterios(pwd_prueba)
 
 st.markdown("### Progreso de seguridad:")
@@ -115,7 +119,6 @@ for criterio, cumplido in criterios.items():
     color = "green" if cumplido else "red"
     st.markdown(f":{color}[{icono} {criterio}]")
 
-# Lógica condicional: Mostrar el bloque de copiar SÓLO cuando todo es correcto
 if pwd_prueba:
     if all(criterios.values()):
         st.success("¡Excelente! Tu contraseña es 100% segura y cumple con los 12 caracteres.")
