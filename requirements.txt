@@ -1,1 +1,1 @@
-streamlit-keyup
+streamlit-keyup==0.3.0
