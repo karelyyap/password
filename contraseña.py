@@ -6,14 +6,14 @@ from st_keyup import st_keyup
 # --- FUNCIONES DE LÓGICA ---
 
 def generar_contrasenas(palabra_base):
-    # 1. Separamos por espacios para identificar si hay múltiples palabras
+    # Separamos por espacios para identificar si hay múltiples palabras
     palabras = palabra_base.split() 
     
     if len(palabras) > 1:
         # Si hay varias, toma las primeras 2 letras de cada una y las une
         palabra_base = "".join(p[:2] for p in palabras)[:5]
     else:
-        # Si es una sola palabra, nos aseguramos de quitar los espacios y tomar 5 letras
+        # Si es una sola palabra, nos aseguramos de quitar los espacios
         palabra_base = palabra_base.replace(" ", "")[:5] 
     
     simbolos = "!@#$%&*+?"
@@ -26,7 +26,6 @@ def generar_contrasenas(palabra_base):
         relleno_izq = "".join(secrets.choice(letras + numeros + simbolos) for _ in range(3))
         pwd = f"{relleno_izq}{palabra_base}{secrets.choice(simbolos)}{secrets.choice(numeros)}"
         
-        # En la generación sí obligamos a que sean 12 caracteres exactos
         while len(pwd) < 12:
             pwd += secrets.choice(letras + numeros + simbolos)
             
@@ -39,7 +38,7 @@ def evaluar_criterios(pwd):
     
     if not pwd:
         return {
-            "Longitud de 12 caracteres o más": False, # <-- CORREGIDO
+            "Longitud de 12 caracteres o más": False,
             "Al menos una letra mayúscula": False,
             "Al menos una letra minúscula": False,
             "Al menos un número": False,
@@ -47,7 +46,7 @@ def evaluar_criterios(pwd):
         }
         
     return {
-        "Longitud de 12 caracteres o más": len(pwd) >= 12, # <-- CORREGIDO
+        "Longitud de 12 caracteres o más": len(pwd) >= 12,
         "Al menos una letra mayúscula": any(c.isupper() for c in pwd),
         "Al menos una letra minúscula": any(c.islower() for c in pwd),
         "Al menos un número": any(c.isdigit() for c in pwd),
@@ -96,7 +95,13 @@ st.divider()
 st.header("2. Evaluador de Contraseñas (En vivo)")
 st.write("Escribe tu contraseña y la evaluación se actualizará mientras tecleas.")
 
-pwd_prueba = st_keyup("Ingresa la contraseña a probar:", max_chars=50, key="eval") or ""
+# SOLUCIÓN AL BUG: Declarar explícitamente label y value para que no se pierdan en el rerun
+pwd_prueba = st_keyup(
+    label="Ingresa la contraseña a probar:", 
+    value="", 
+    max_chars=50, 
+    key="eval_input"
+) or ""
 
 criterios = evaluar_criterios(pwd_prueba)
 
@@ -108,7 +113,6 @@ for criterio, cumplido in criterios.items():
 
 if pwd_prueba:
     if all(criterios.values()):
-        # <-- CORREGIDO EL MENSAJE DE ÉXITO
         st.success("¡Excelente! Tu contraseña es 100% segura y cumple con los requisitos de longitud.")
         st.balloons()
         
